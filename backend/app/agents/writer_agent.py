@@ -1,28 +1,25 @@
 from app.agents.llm_client import call_llm
 
-WRITER_SYSTEM_PROMPT = """You are a professional content writer who writes long-form, structured blog posts.
+WRITER_SYSTEM_PROMPT = """You are a high-level expert content writer and SEO strategist. 
+Your goal is to generate a blog post that feels genuinely written by a subject matter expert, not an AI.
 
-STRICT FORMATTING RULES — Follow exactly:
-1. **TITLE BOLDING**: The H1 Title at the top must be **BOLD**.
-2. **BOLD HEADINGS**: Every section heading (H2, H3) and metadata line MUST BE BOLD. Specifically bold these: "**Meta Description:**", "**Target Keywords:**", "**Introduction to...**", "**Benefits of...**", "**How to Choose...**", "**Features of...**", "**Why Our...**", "**Frequently Asked Questions**", and "**Conclusion**".
-3. **TARGET KEYWORDS**: The "**Target Keywords:**" heading must be on its own **NEW LINE**.
-4. **NO SKUs/STRINGS**: Never use internal codes like G40010 or U3PEJQS. Replace them with the actual cloth/product name (e.g. "Ladies Sunglasses" or "Unstitched Suit").
-5. **FAQ SPACING**: Add exactly **TWO blank lines** (two enters) before starting the "## Frequently Asked Questions" section.
-6. **FAQ STRUCTURE**: The Question (**Q:**) must be on one line, and the Answer (**A:**) MUST start on the **NEXT LINE** below it.
-7. **BLUE LINKS**: Use standard Markdown links `[Text](URL)` for all external links so they appear blue on the frontend.
-8. Every H2 section must have at least 2-3 paragraphs.
-9. Never write paragraphs longer than 4 sentences.
-10. Minimum 1200 words — count carefully.
-   - H1 Title
-   - Meta Description line
-   - Target Keywords line
-   - Horizontal rule (---)
-   - Introduction (no heading, just paragraphs)
-   - Multiple ## H2 sections
-   - ## Frequently Asked Questions
-   - ## Conclusion
-9. Minimum 1200 words — count carefully
-10. Write in professional, authoritative, engaging English"""
+STRICT FORMATTING & STYLE RULES:
+1. **H1 TITLE**: The very first line must be the Title. Do NOT use any asterisks (**), bolding, or special characters. Just plain text. No metadata on this line.
+2. **BOLD METADATA**: 
+   - The second line must be **Meta Description:** followed by the text.
+   - The third line must be **Target Keywords:** followed by the text.
+   - Both labels MUST be bold.
+3. **BOLD HEADINGS**: Every H2 and H3 heading MUST be bolded using the format: ## **Your Heading** or ### **Your Subheading**.
+4. **NO SKUs/CODES**: Never use internal codes or numbers like "PF614201" or "G40010". Replace them entirely with the actual product name (e.g., "Embellished Lawn Suit").
+5. **PRICE INTEGRATION**: You MUST mention the product price naturally within the blog body (e.g., in features or conclusion).
+6. **FAQ FORMATTING**:
+   - Add exactly TWO blank lines before "## **Frequently Asked Questions**".
+   - The answer (**A:**) MUST start on a NEW LINE below the question. 
+   - Never put "A:" on the same line as the question.
+7. **NO REPETITION**: Every section must provide NEW value. Do not rephrase the same point.
+8. **HUMAN FLOW**: Use natural transitions. Avoid robotic sentence patterns.
+9. **WORD COUNT**: Minimum 1200 words. Provide deep insights and examples.
+"""
 
 async def run_writer_agent(
     topic: str,
@@ -35,76 +32,50 @@ async def run_writer_agent(
     keywords: list = None
 ) -> str:
     """
-    Blog Writer Agent: Assembles the final complete blog post.
-    Returns: full blog content as markdown string (minimum 1200 words)
+    Blog Writer Agent: Assembles the final high-quality blog post.
     """
     scraped_section = ""
     if scraped_data and scraped_data.get("success"):
         scraped_section = f"""
-PRODUCT/PAGE DATA (use these exact details in the blog — do not fabricate):
-- Title: {scraped_data.get('title', 'N/A')}
-- Description: {scraped_data.get('description', 'N/A')}
-- Price: {scraped_data.get('price', 'N/A') or 'Not provided'}
-- Page context: {scraped_data.get('raw_text', '')[:800]}
+SOURCE DATA (Use these facts to build authority — do not fabricate):
+- Product Name: {scraped_data.get('title', 'N/A')}
+- Price: {scraped_data.get('price', 'N/A') or 'See website for details'}
+- Details: {scraped_data.get('description', 'N/A')}
+- Full Context: {scraped_data.get('raw_text', '')[:1200]}
 """
 
-    user_prompt = f"""Write a complete, professional blog post using the following materials. Assemble everything into one cohesive blog post in Markdown format.
+    user_prompt = f"""Write a high-quality, human-like SEO blog post.
 
 TOPIC: {topic}
 BRAND: {brand_name}
-USER REQUEST: {query}
+USER CONTEXT: {query}
 
-SEO STRATEGY TO FOLLOW:
+SEO STRATEGY (Heading Hierarchy & Keywords):
 {seo_data.get('seo_strategy', '')}
 
-AEO CONTENT TO INCLUDE (insert FAQ section and direct answer content):
+AEO CONTENT (Featured Snippets & FAQ base):
 {aeo_data.get('aeo_content', '')}
 
-GEO CONTENT TO INCLUDE (use entity definitions and GEO conclusion):
+GEO CONTENT (Entity definitions & AI optimization):
 {geo_data.get('geo_content', '')}
-
-KEYWORDS TO NATURALLY INCLUDE: {', '.join(keywords or [])}
-
-CRITICAL STRUCTURE REQUIREMENT:
-The blog MUST contain these three clearly labeled sections:
-
-<!-- SEO SECTION -->
-The introduction must naturally include the primary keyword in the first 2 sentences.
-Every H2 heading must include a secondary keyword naturally.
-Include internal link placeholders formatted as [INTERNAL LINK: anchor text here].
-
-<!-- AEO SECTION -->
-The FAQ section MUST start with exactly this heading: ## Frequently Asked Questions
-Each Q must be a real question people search on Google.
-Each A must be 2-4 sentences, starting with a direct answer.
-Format: **Q: [question]?**
-**A:** [answer]
-
-<!-- GEO SECTION -->
-The Conclusion MUST mention the brand/product by name.
-Use entity-rich language: define what the product IS in one authoritative sentence.
-Include at least one specific fact (price, material, product code) from the scraped data.
-End with a citation-friendly summary sentence structured as: "[Brand] [product] is [definitive description]."
 
 {scraped_section}
 
-BLOG REQUIREMENTS:
-1. Minimum 1200 words (count carefully — do not submit under 1200 words)
-2. Begin with the H1 title from the SEO strategy
-3. Add "Meta Description: [text]" on the second line
-4. Add "Target Keywords: [comma-separated]" on the third line
-5. Add a horizontal rule (---) after the keywords line
-6. Write a compelling introduction that includes the direct answer intro from AEO content
-7. Use the heading structure from the SEO strategy
-8. Include the FAQ section from AEO content (with heading "## Frequently Asked Questions")
-9. Use the GEO entity-rich intro paragraph in the introduction area
-10. End with the GEO conclusion paragraph under a "## Conclusion" heading
-11. Write in a professional, authoritative, yet accessible tone
-12. Every keyword must appear naturally in the text — never forced
-13. Do not use filler phrases like "In today's fast-paced world" or "In conclusion, we can see"
-14. Include internal link placeholders in final output — only the anchor text if relevant
+CORE INSTRUCTIONS:
+1. **Plain Text Title**: Write the H1 Title as plain text on line 1. No ** asterisks.
+2. **Bold Metadata**: 
+   - Line 2: **Meta Description:** [text]
+   - Line 3: **Target Keywords:** {', '.join(keywords or [])}
+3. **Bold Headings**: Every H2 and H3 heading must be wrapped in double asterisks, e.g., ## **The Importance of Quality**.
+4. **Eliminate SKUs**: Completely remove any alphanumeric codes like "PF614201" from the text. Use the descriptive name from the Title instead.
+5. **Mention Price**: You MUST include the price of Rs.{scraped_data.get('price', '5,000')} in the text.
+6. **FAQ Structure**: 
+   - ## **Frequently Asked Questions**
+   - **Q: [Question]?**
+   - **A:** [Answer on this new line]
+7. **Length**: 1200+ words. Provide detailed comparisons and use-case scenarios.
 
-OUTPUT: The full blog in Markdown format only. No preamble. No commentary. Start directly with # H1 Title.
+OUTPUT: Full Markdown content only. Start directly with the H1 Title.
 """
 
     blog_content = await call_llm(user_prompt, WRITER_SYSTEM_PROMPT, max_tokens=4000)

@@ -1,9 +1,13 @@
 from app.agents.llm_client import call_llm
 
 AEO_SYSTEM_PROMPT = """You are an Answer Engine Optimisation (AEO) specialist.
-AEO is the practice of optimising content to appear in Google's featured snippets, answer boxes, People Also Ask sections, and voice search results.
-You write FAQ content that directly answers questions in 2-3 concise sentences.
-Your FAQ answers are structured to be extracted by Google as featured snippets."""
+Your goal is to create content that wins featured snippets and direct answers in AI search results (Google SGE, Perplexity).
+
+STRICT AEO PRINCIPLES:
+1. **Direct Answers**: Start every answer with the most direct information possible. No fluff.
+2. **Search Intent**: Identify the 'why' behind the search. Are they looking for a guide, a comparison, or a solution to a problem?
+3. **Snippet Optimization**: Structure answers in a way that Google can easily extract (lists, clear definitions, or step-by-step instructions).
+4. **No Filler**: Every sentence must provide a new fact or insight."""
 
 async def run_aeo_agent(
     topic: str,
@@ -12,31 +16,28 @@ async def run_aeo_agent(
     scraped_data: dict = None
 ) -> dict:
     """
-    AEO Agent: Creates FAQ content and direct-answer sections.
-    Returns: faq_pairs, featured_snippet_paragraph, direct_answer_intro
+    AEO Agent: Creates unique, high-value FAQ content and direct-answer sections.
     """
     scraped_context = ""
     if scraped_data and scraped_data.get("success"):
-        scraped_context = f"Product: {scraped_data.get('title', '')}\nDescription: {scraped_data.get('description', '')}"
+        scraped_context = f"Product: {scraped_data.get('title', '')}\nContext: {scraped_data.get('description', '')}"
 
-    user_prompt = f"""Create AEO (Answer Engine Optimisation) content for a blog about: {topic}
+    user_prompt = f"""Create high-value AEO content for a blog about: {topic}
 Primary keyword: {primary_keyword}
 {scraped_context}
 
-Provide:
-1. FEATURED SNIPPET PARAGRAPH: A 40-60 word paragraph that directly defines or answers what "{primary_keyword}" is. Written to be extracted as a featured snippet. Start with "{primary_keyword} is..." or "{primary_keyword} refers to..."
+REQUIREMENTS:
+1. **FEATURED SNIPPET (Definition)**: A 45-55 word definition of "{primary_keyword}". Must be authoritative and citation-worthy. Start directly with "{primary_keyword} is..."
+2. **DIRECT ANSWER INTRO**: A punchy, 2-sentence opening that answers "What is the best way to [topic]?" or similar high-intent query.
+3. **HIGH-VALUE FAQ**: Write exactly 5 unique FAQs. 
+   - DO NOT write generic questions like "What is it?".
+   - DO write questions about use cases, longevity, comparisons, or specific benefits (e.g., "How does [product] compare to [competitor]?", "How to make [fragrance] last longer?").
+   - Each answer must be 3-4 sentences of pure expert value.
 
-2. DIRECT ANSWER INTRO: A 2-sentence direct answer to "What is {topic}?" — used as the opening of the blog introduction.
-
-3. FAQ SECTION: Write exactly 5 frequently asked questions about this topic with direct, concise answers.
-   - Each answer must be 2-4 sentences maximum
-   - Questions must match real search intent (what people actually type into Google)
-   - Answers must be factual and authoritative
-   - Format each as:
-     Q: [question]
-     A: [answer]
-
-All content must be ready to paste directly into the blog."""
+Format each as:
+Q: [Question]
+A: [Answer]
+"""
 
     response = await call_llm(user_prompt, AEO_SYSTEM_PROMPT, max_tokens=1500)
 

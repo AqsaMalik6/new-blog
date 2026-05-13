@@ -15,18 +15,18 @@ const strategies = [
     title: "Answer Engine Optimisation",
     label: "AEO",
     description: "Go beyond standard search with AEO. We generate FAQ schema, featured snippet paragraphs, and direct-answer content tailored for Google's answer boxes and voice search.",
-    color: "text-purple-500",
-    bg: "bg-purple-500/10",
-    border: "border-purple-500/20"
+    color: "text-cyan-500",
+    bg: "bg-cyan-500/10",
+    border: "border-cyan-500/20"
   },
   {
     icon: <Bot className="w-8 h-8" />,
     title: "Generative Engine Optimisation",
     label: "GEO",
     description: "The future of visibility. We use entity-rich definitions and citation-worthy phrasing so AI tools like ChatGPT and Gemini cite your brand as a source of authority.",
-    color: "text-green-500",
-    bg: "bg-green-500/10",
-    border: "border-green-500/20"
+    color: "text-blue-400",
+    bg: "bg-blue-400/10",
+    border: "border-blue-400/20"
   }
 ];
 

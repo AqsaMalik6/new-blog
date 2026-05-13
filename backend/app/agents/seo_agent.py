@@ -1,9 +1,13 @@
 from app.agents.llm_client import call_llm
 
-SEO_SYSTEM_PROMPT = """You are an expert SEO strategist with 10+ years of experience.
-Your job is to create a complete SEO strategy document for a blog post.
-You understand Google's ranking factors: keyword placement, heading hierarchy, semantic relevance, E-E-A-T signals, and user intent matching.
-Output structured data only — no conversational text."""
+SEO_SYSTEM_PROMPT = """You are a master SEO content strategist. 
+Your goal is to design a content map that matches specific user search intent (informational, transactional, or navigational).
+
+SEO PRINCIPLES:
+1. **Semantic Depth**: Use a variety of related terms, not just the primary keyword.
+2. **Intent Matching**: Ensure the heading structure answers the user's core questions.
+3. **E-E-A-T**: Focus on establishing Experience, Expertise, Authoritativeness, and Trustworthiness.
+4. **Logical Flow**: Headings should tell a story and guide the reader through the topic."""
 
 async def run_seo_agent(
     topic: str,
@@ -12,8 +16,7 @@ async def run_seo_agent(
     scraped_data: dict = None
 ) -> dict:
     """
-    SEO Agent: Creates SEO strategy for the blog.
-    Returns: title, meta_description, heading_structure, keyword_placement_notes
+    SEO Agent: Creates a high-quality, intent-driven SEO strategy for the blog.
     """
     primary_keyword = keywords[0] if keywords else topic
     secondary_keywords = keywords[1:5] if len(keywords) > 1 else []
@@ -22,30 +25,29 @@ async def run_seo_agent(
     scraped_context = ""
     if scraped_data and scraped_data.get("success"):
         scraped_context = f"""
-Product/Page Details:
+Product Context:
 - Title: {scraped_data.get('title', 'N/A')}
-- Description: {scraped_data.get('description', 'N/A')}
 - Price: {scraped_data.get('price', 'N/A')}
-- Additional context: {scraped_data.get('raw_text', '')[:500]}
+- Description: {scraped_data.get('description', 'N/A')}
 """
 
-    user_prompt = f"""Create a complete SEO strategy for a blog post with these details:
-
-Topic: {topic}
+    user_prompt = f"""Design a high-level SEO strategy for a blog about: {topic}
 Brand: {brand_name}
 Primary Keyword: {primary_keyword}
-Secondary Keywords: {', '.join(secondary_keywords)}
-Long-tail Keywords: {', '.join(longtail_keywords)}
+Secondary/Long-tail: {', '.join(secondary_keywords + longtail_keywords)}
 {scraped_context}
 
-Provide:
-1. SEO-optimised H1 title (60-70 characters, includes primary keyword)
-2. Meta description (150-160 characters, includes primary keyword, has a call to action)
-3. Recommended heading structure (H2 and H3 headings for the full blog)
-4. Keyword placement notes (where to use each keyword in the blog)
-5. Internal link placeholder suggestions (2-3 anchor text suggestions for internal links)
+STRATEGY REQUIREMENTS:
+1. **CREATIVE H1**: A 60-70 character title that is catchy and includes the primary keyword naturally.
+2. **INTENT-DRIVEN META**: A 155-character description that focuses on the benefit to the user.
+3. **VALUE-DRIVEN HEADING STRUCTURE**: 
+   - Create a logical flow of H2 and H3 headings.
+   - Every heading must promise a specific benefit or answer a specific question.
+   - Avoid generic headings like "Introduction" or "Features". Use things like "Why [Brand] [Product] is a Game-Changer for [Target Audience]".
+4. **SEMANTIC KEYWORD MAP**: Suggest where to place keywords for maximum semantic relevance, not just density.
+5. **INTERNAL LINKING**: Suggest 3 contextually relevant anchor texts.
 
-Format as clear sections with labels."""
+Output the strategy clearly with labels."""
 
     response = await call_llm(user_prompt, SEO_SYSTEM_PROMPT, max_tokens=1500)
 
